@@ -501,8 +501,8 @@ const injectBlogSection = async () => {
 const patchAgencyVideo = () => {
 	const heading = Array.from(document.querySelectorAll("h2")).find(
 		(element) =>
-			normalizeLabel(element.textContent).replace(/\s+/g, " ") ===
-			"there are so many digital marketing agencies out",
+			normalizeLabel(element.textContent).replace(/\s+/g, "") ===
+			"therearesomanydigitalmarketingagenciesout",
 	);
 	if (!heading) return;
 
@@ -512,38 +512,100 @@ const patchAgencyVideo = () => {
 	}
 	if (!carouselRoot) return;
 
-	const videoId = "OR_1ogQYevo";
-	const videoTitle = "How AI Will Make Your Clothes Cheaper";
-	const mobileFrame = carouselRoot.querySelector<HTMLIFrameElement>(
-		'[class*="md:hidden"] iframe[src*="youtube.com/embed/"]',
+	const videoIds = [
+		"vgetmcGTvhs",
+		"hbnoTaRWdMk",
+		"oZ-8mKL84gM",
+		"QsHtoOUO0OU",
+		"FDO0-XDheXU",
+	];
+	const mobileFrames = Array.from(
+		carouselRoot.querySelectorAll<HTMLIFrameElement>(
+			'[class*="md:hidden"] iframe[src*="youtube.com/embed/"]',
+		),
 	);
-	if (mobileFrame && !mobileFrame.src.includes(`/embed/${videoId}`)) {
-		mobileFrame.src = `https://www.youtube.com/embed/${videoId}?rel=0`;
-		mobileFrame.title = videoTitle;
+	mobileFrames.forEach((frame, index) => {
+		const videoId = videoIds[index];
+		if (!videoId) return;
+
+		const src = `https://www.youtube.com/embed/${videoId}?rel=0`;
+		if (frame.src !== src) frame.src = src;
+		frame.title = `Nevas AI Short ${index + 1}`;
+	});
+
+	const desktopCards = Array.from(
+		carouselRoot.querySelectorAll<HTMLButtonElement>('[class*="md:flex"] > button'),
+	);
+	desktopCards.forEach((card, index) => {
+		const videoId = videoIds[index];
+		if (!videoId) return;
+
+		const title = `Nevas AI Short ${index + 1}`;
+		const desktopFrame = card.querySelector<HTMLIFrameElement>("iframe");
+		if (desktopFrame) {
+			const src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0`;
+			if (desktopFrame.src !== src) desktopFrame.src = src;
+			desktopFrame.title = title;
+		}
+
+		const thumbnail = card.querySelector<HTMLImageElement>("img");
+		if (thumbnail) {
+			const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+			if (thumbnail.src !== thumbnailUrl) thumbnail.src = thumbnailUrl;
+			thumbnail.alt = title;
+		}
+	});
+};
+
+const patchAboutHeading = () => {
+	const heading = document.querySelector<HTMLElement>(
+		".about-us-sec .about-content .sec-title h2.title",
+	);
+	if (!heading) return;
+
+	const headingText = normalizeLabel(heading.textContent).replace(/\s+/g, " ");
+	if (
+		headingText ===
+		"pioneers in artificial intelligence solutions and innovation"
+	) {
+		heading.textContent = "Pioneers in AI solutions & innovation";
+		heading.style.wordBreak = "normal";
+		heading.style.overflowWrap = "normal";
+		heading.style.hyphens = "none";
 	}
 
-	const desktopCard = carouselRoot.querySelector<HTMLButtonElement>(
-		'[class*="md:flex"] > button',
-	);
-	if (!desktopCard) return;
-
-	const desktopFrame = desktopCard.querySelector<HTMLIFrameElement>("iframe");
-	if (desktopFrame && !desktopFrame.src.includes(`/embed/${videoId}`)) {
-		desktopFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0`;
-		desktopFrame.title = videoTitle;
+	const intro = heading.parentElement?.querySelector(":scope > p");
+	if (intro && normalizeLabel(intro.textContent).startsWith("at aido,")) {
+		intro.textContent = intro.textContent?.replace("At AiDo,", "At Nevas AI,") ?? "";
 	}
+};
 
-	const thumbnail = desktopCard.querySelector<HTMLImageElement>("img");
-	const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-	if (thumbnail && thumbnail.src !== thumbnailUrl) {
-		thumbnail.src = thumbnailUrl;
-		thumbnail.alt = videoTitle;
+const removeTestimonialAttribution = () => {
+	const testimonialCard = Array.from(
+		document.querySelectorAll<HTMLElement>('[class*="bg-black"][class*="rounded-3xl"]'),
+	).find((card) =>
+		Array.from(card.querySelectorAll("p")).some((paragraph) =>
+			normalizeLabel(paragraph.textContent).includes("the level of innovation and execution"),
+		),
+	);
+	if (!testimonialCard) return;
+
+	for (const paragraph of Array.from(testimonialCard.querySelectorAll("p"))) {
+		const text = paragraph.textContent?.trim() ?? "";
+		if (
+			paragraph.classList.contains("opacity-80") ||
+			/^(?:-|–|—|â€“)\s*/.test(text)
+		) {
+			paragraph.remove();
+		}
 	}
 };
 
 const wireNavigation = () => {
 	removeExpertAutomationSection();
 	patchAgencyVideo();
+	patchAboutHeading();
+	removeTestimonialAttribution();
 	connectContactButtons();
 	const servicesSection = document.getElementById("solutions");
 	if (servicesSection) servicesSection.id = "services";
